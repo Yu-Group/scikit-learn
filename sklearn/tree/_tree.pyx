@@ -92,6 +92,7 @@ cdef class TreeBuilder:
 
     cpdef build(self, Tree tree, object X, np.ndarray y,
                 np.ndarray sample_weight=None,
+                np.ndarray feature_weight=None,
                 np.ndarray X_idx_sorted=None):
         """Build a decision tree from the training set (X, y)."""
         pass
@@ -144,6 +145,7 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
 
     cpdef build(self, Tree tree, object X, np.ndarray y,
                 np.ndarray sample_weight=None,
+                np.ndarray feature_weight=None,
                 np.ndarray X_idx_sorted=None):
         """Build a decision tree from the training set (X, y)."""
 
@@ -315,6 +317,7 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
 
     cpdef build(self, Tree tree, object X, np.ndarray y,
                 np.ndarray sample_weight=None,
+                np.ndarray feature_weight=None,
                 np.ndarray X_idx_sorted=None):
         """Build a decision tree from the training set (X, y)."""
 

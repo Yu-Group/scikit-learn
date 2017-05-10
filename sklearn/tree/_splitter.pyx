@@ -95,6 +95,7 @@ cdef class Splitter:
         self.y = NULL
         self.y_stride = 0
         self.sample_weight = NULL
+        self.feature_weight = NULL
 
         self.max_features = max_features
         self.min_samples_leaf = min_samples_leaf
@@ -120,6 +121,7 @@ cdef class Splitter:
                    object X,
                    np.ndarray[DOUBLE_t, ndim=2, mode="c"] y,
                    DOUBLE_t* sample_weight,
+                   DOUBLE_t* feature_weight,
                    np.ndarray X_idx_sorted=None) except -1:
         """Initialize the splitter.
 
@@ -140,6 +142,9 @@ cdef class Splitter:
             The weights of the samples, where higher weighted samples are fit
             closer than lower weight samples. If not provided, all samples
             are assumed to have uniform weight.
+
+        feature_weight : numpy.ndarray, dtype=DOUBLE_t (optional)
+            <Add description here>
         """
 
         self.rand_r_state = self.random_state.randint(0, RAND_R_MAX)
@@ -183,6 +188,7 @@ cdef class Splitter:
         self.y_stride = <SIZE_t> y.strides[0] / <SIZE_t> y.itemsize
 
         self.sample_weight = sample_weight
+        self.feature_weight = feature_weight
         return 0
 
     cdef int node_reset(self, SIZE_t start, SIZE_t end,
@@ -398,8 +404,13 @@ cdef class BestSplitter(BaseDenseSplitter):
             #   and aren't constant.
 
             # Draw a feature at random
-            f_j = rand_int(n_drawn_constants, f_i - n_found_constants,
-                           random_state)
+            ## TODO: modify this line to use feature weights
+            if self.feature_weights == NULL:
+                f_j = rand_int(n_drawn_constants, f_i - n_found_constants,
+                               random_state)
+            else:
+                # Your code here to use feature weights to do a different kind of split
+                pass
 
             if f_j < n_known_constants:
                 # f_j in the interval [n_drawn_constants, n_known_constants[
@@ -700,6 +711,8 @@ cdef class RandomSplitter(BaseDenseSplitter):
         cdef DTYPE_t max_feature_value
         cdef DTYPE_t current_feature_value
         cdef SIZE_t partition_end
+
+        cdef DOUBLE_t* feature_weights = self.feature_weights
 
         _init_split(&best, end)
 
