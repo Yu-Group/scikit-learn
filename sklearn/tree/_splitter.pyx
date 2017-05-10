@@ -405,7 +405,7 @@ cdef class BestSplitter(BaseDenseSplitter):
 
             # Draw a feature at random
             ## TODO: modify this line to use feature weights
-            if self.feature_weights == NULL:
+            if self.feature_weight == NULL:
                 f_j = rand_int(n_drawn_constants, f_i - n_found_constants,
                                random_state)
             else:
@@ -712,7 +712,7 @@ cdef class RandomSplitter(BaseDenseSplitter):
         cdef DTYPE_t current_feature_value
         cdef SIZE_t partition_end
 
-        cdef DOUBLE_t* feature_weights = self.feature_weights
+        cdef DOUBLE_t* feature_weights = self.feature_weight
 
         _init_split(&best, end)
 
