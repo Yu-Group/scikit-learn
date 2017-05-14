@@ -157,7 +157,7 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
         """Build a decision tree from the training set (X, y)."""
 
         # check input
-        X, y, sample_weight = self._check_input(X, y, sample_weight,
+        X, y, sample_weight, feature_weight = self._check_input(X, y, sample_weight,
                                                 feature_weight)
 
         cdef DOUBLE_t* sample_weight_ptr = NULL

@@ -752,7 +752,7 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
             min_impurity_split=min_impurity_split,
             presort=presort)
 
-    def fit(self, X, y, sample_weight=None, check_input=True,
+    def fit(self, X, y, sample_weight=None, feature_weight=None, check_input=True,
             X_idx_sorted=None):
         """Build a decision tree classifier from the training set (X, y).
 
