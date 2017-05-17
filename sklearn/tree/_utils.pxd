@@ -52,6 +52,7 @@ cdef np.ndarray sizet_ptr_to_ndarray(SIZE_t* data, SIZE_t size)
 cdef SIZE_t rand_int(SIZE_t low, SIZE_t high,
                      UINT32_t* random_state) nogil
 
+cdef SIZE_t rand_int_weighted(DOUBLE_t* weights, SIZE_t length) nogil
 
 cdef double rand_uniform(double low, double high,
                          UINT32_t* random_state) nogil
