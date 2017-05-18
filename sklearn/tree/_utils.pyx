@@ -95,27 +95,28 @@ cdef inline double rand_uniform(double low, double high,
     return ((high - low) * <double> our_rand_r(random_state) /
             <double> RAND_R_MAX) + low
 
-#cdef SIZE_t weighted_sampling(SIZE_t* feature_ind, DOUBLE_t* feature_weight,
-#                              SIZE_t low, SIZE_t high, UINT32_t* random_state) nogil:
-#     """Generate a weighted sample from [low; high)."""
-#     cdef double prob_sum = 0
-#     cdef SIZE_t i = low
-#     cdef double key = 0
-#     for i in range(low, high):
-#         prob_sum += feature_weight[feature_ind[i]]
-#     if prob_sum <= 0:
-#         #If the probability is non-positive (Which should not happen), random select one.
-#         return rand_int(low, high, random_state)
-#     else:
-#         #If the probability is positive, select according to probability
-#         i = low 
-#         key = rand_uniform(0, prob_sum, random_state)
-#         while key < prob_sum:
-#             key += feature_weight[feature_ind[i]]
-#             i += 1
-#         return i
-#
-#
+cdef SIZE_t weighted_sampling(SIZE_t* feature_ind, DOUBLE_t* feature_weight,
+                              SIZE_t low, SIZE_t high, UINT32_t* random_state) nogil:
+     """Generate a weighted sample from [low; high)."""
+     cdef double prob_sum = 0
+     cdef SIZE_t i = low
+     cdef double key = 0
+     cdef double step = 0
+     for i in range(low, high):
+         prob_sum += feature_weight[feature_ind[i]]
+     if prob_sum <= 0:
+         #If the probability is non-positive (Which should not happen), random select one.
+         return rand_int(low, high, random_state)
+     else:
+         #If the probability is positive, select according to probability
+         i = low
+         key = rand_uniform(0, prob_sum, random_state)
+         step = 0
+         while step < key:
+             step += feature_weight[feature_ind[i]]
+             i += 1
+         return i - 1
+
 cdef inline double log(double x) nogil:
     return ln(x) / ln(2.0)
 

@@ -31,6 +31,7 @@ from scipy.sparse import csc_matrix
 from ._utils cimport log
 from ._utils cimport rand_int
 from ._utils cimport rand_int_weighted
+from ._utils cimport weighted_sampling
 from ._utils cimport rand_uniform
 from ._utils cimport RAND_R_MAX
 from ._utils cimport safe_realloc
@@ -412,9 +413,12 @@ cdef class BestSplitter(BaseDenseSplitter):
                                random_state)
             else:
                 # Your code here to use feature weights to do a different kind of split
-                f_j = rand_int_weighted(self.feature_weight, 30)
-                #f_j = weighted_sampling(self.features, self.feature_weight, n_drawn_constants, f_i, random_state)
-                pass
+                #f_j = rand_int_weighted(self.feature_weight, 30)
+                f_j = weighted_sampling(self.features, self.feature_weight, 
+                                        n_drawn_constants, f_i - n_found_constants, random_state)
+                #f_j = rand_int(n_drawn_constants, f_i - n_found_constants,
+                #               random_state)
+
 
             if f_j < n_known_constants:
                 # f_j in the interval [n_drawn_constants, n_known_constants[
