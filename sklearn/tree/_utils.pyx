@@ -19,21 +19,7 @@ from libc.math cimport log as ln
 import numpy as np
 cimport numpy as np
 np.import_array()
-cdef extern from "stdlib.h" nogil:
-    double drand48() 
-    void srand48(long int seedval)
 
-cdef SIZE_t rand_int_weighted(DOUBLE_t* weights, SIZE_t length) nogil:
-    cdef SIZE_t idx, i
-    cdef double cs
-    cdef double random
-    random = drand48()
-    cs = 0.0
-    i = 0
-    while cs < random and i < length:
-        cs += weights[i]
-        i += 1
-    return i - 1
 # =============================================================================
 # Helper functions
 # =============================================================================
@@ -96,13 +82,16 @@ cdef inline double rand_uniform(double low, double high,
             <double> RAND_R_MAX) + low
 
 cdef SIZE_t weighted_sampling(SIZE_t* feature_ind, DOUBLE_t* feature_weight,
+                              SIZE_t head, SIZE_t jump,
                               SIZE_t low, SIZE_t high, UINT32_t* random_state) nogil:
-     """Generate a weighted sample from [low; high)."""
+     """Generate a weighted sample from [low, head) or [head+jump, high)."""
      cdef double prob_sum = 0
      cdef SIZE_t i = low
      cdef double key = 0
      cdef double step = 0
-     for i in range(low, high):
+     for i in range(low, head):
+         prob_sum += feature_weight[feature_ind[i]]
+     for i in range(head+jump, high):
          prob_sum += feature_weight[feature_ind[i]]
      if prob_sum <= 0:
          #If the probability is non-positive (Which should not happen), random select one.
@@ -113,6 +102,8 @@ cdef SIZE_t weighted_sampling(SIZE_t* feature_ind, DOUBLE_t* feature_weight,
          key = rand_uniform(0, prob_sum, random_state)
          step = 0
          while step < key:
+             if i == head:
+                 i += jump
              step += feature_weight[feature_ind[i]]
              i += 1
          return i - 1
