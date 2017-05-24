@@ -84,14 +84,14 @@ cdef inline double rand_uniform(double low, double high,
 cdef SIZE_t weighted_sampling(SIZE_t* feature_ind, DOUBLE_t* feature_weight,
                               SIZE_t head, SIZE_t jump,
                               SIZE_t low, SIZE_t high, UINT32_t* random_state) nogil:
-     """Generate a weighted sample from [low, head) or [head+jump, high)."""
+     """Generate a weighted sample from [low, head) or [head+jump, high+jump)."""
      cdef double prob_sum = 0
      cdef SIZE_t i = low
      cdef double key = 0
      cdef double step = 0
      for i in range(low, head):
          prob_sum += feature_weight[feature_ind[i]]
-     for i in range(head+jump, high):
+     for i in range(head+jump, high+jump):
          prob_sum += feature_weight[feature_ind[i]]
      if prob_sum <= 0:
          #If the probability is non-positive (Which should not happen), random select one.
