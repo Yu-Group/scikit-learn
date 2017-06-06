@@ -23,7 +23,7 @@ from scipy import stats
 from math import ceil
 
 #from sklearn import metrics
-from ..metrics import classification
+from sklearn import metrics
 #from sklearn import tree
 from . import tree
 #from sklearn.tree import _tree
