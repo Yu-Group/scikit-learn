@@ -2,7 +2,6 @@
 from sklearn.tree import irf_utils
 import numpy as np
 from functools import reduce
-# For the generate_rf_example function
 from sklearn.datasets import load_breast_cancer
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
@@ -10,6 +9,10 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_true
+
+# =============================================================================
+# Generate Data and Random Forest Fit to do iRF
+# =============================================================================
 
 
 def generate_rf_example(sklearn_ds=load_breast_cancer(),
@@ -27,36 +30,47 @@ def generate_rf_example(sklearn_ds=load_breast_cancer(),
     sklearn_ds : sklearn dataset
         Choose from the `load_breast_cancer` or the `load_iris datasets`
         functions from the `sklearn.datasets` module
+
     train_split_propn : float
         Should be between 0.0 and 1.0 and represent the
         proportion of the dataset to include in the train split.
+
     n_estimators : int, optional (default=10)
         The index of the root node of the tree. Should be set as default to
         3 and not changed by the user
+
     feature_weight : list, optional (default=None)
         The chance of splitting at each feature.
+
     random_state_split: int (default=2017)
         The seed used by the random number generator for the `train_test_split`
         function in creating our training and validation sets
+
     random_state_classifier: int (default=2018)
         The seed used by the random number generator for
         the `RandomForestClassifier` function in fitting the random forest
+
     Returns
     -------
     X_train : array-like or sparse matrix, shape = [n_samples, n_features]
         Training features vector, where n_samples in the number of samples and
         n_features is the number of features.
+
     X_test : array-like or sparse matrix, shape = [n_samples, n_features]
         Test (validation) features vector, where n_samples in the
         number of samples and n_features is the number of features.
+
     y_train : array-like or sparse matrix, shape = [n_samples, n_classes]
         Training labels vector, where n_samples in the number of samples and
         n_classes is the number of classes.
+
     y_test : array-like or sparse matrix, shape = [n_samples, n_classes]
         Test (validation) labels vector, where n_samples in the
         number of samples and n_classes is the number of classes.
+
     rf : RandomForestClassifier object
         The fitted random forest to the training data
+
     Examples
     --------
     >>> from sklearn.datasets import load_breast_cancer
@@ -90,7 +104,10 @@ def generate_rf_example(sklearn_ds=load_breast_cancer(),
     return X_train, X_test, y_train, y_test, rf
 
 
+# =============================================================================
 # Load the breast cancer dataset
+# =============================================================================
+
 breast_cancer = load_breast_cancer()
 
 # Generate the training and test datasets
@@ -104,7 +121,36 @@ all_rf_tree_data = irf_utils.get_rf_tree_data(rf=rf,
                                               X_test=X_test,
                                               y_test=y_test)
 
+
+# =============================================================================
+# Test that the train test observations sum to the total data set observations
+# =============================================================================
+
+
+def test_generate_rf_example1():
+
+    # Check train test feature split from `generate_rf_example`
+    # against the original breast cancer dataset
+    assert_equal(X_train.shape[0] + X_test.shape[0],
+                 breast_cancer.data.shape[0])
+
+    assert_equal(X_train.shape[1],
+                 breast_cancer.data.shape[1])
+
+    assert_equal(X_test.shape[1],
+                 breast_cancer.data.shape[1])
+
+    # Check feature and outcome sizes
+    assert_equal(X_train.shape[0] + X_test.shape[0],
+                 y_train.shape[0] + y_test.shape[0])
+    #
+
+
+# =============================================================================
 # Get the RIT data and produce RITs
+# =============================================================================
+
+
 np.random.seed(12)
 gen_random_leaf_paths = irf_utils.generate_rit_samples(
     all_rf_tree_data=all_rf_tree_data,
@@ -145,7 +191,10 @@ all_rit_tree_data = irf_utils.get_rit_tree_data(
     noisy_split=False,
     num_splits=2)
 
+# =============================================================================
 # Manually construct an RIT example
+# =============================================================================
+
 # Get the unique feature paths where the leaf
 # node predicted class is just 1
 # We are just going to get it from the first decision tree
@@ -195,7 +244,6 @@ rit_man0 = irf_utils.build_tree(
     num_splits=2)
 
 # Calculate the union values
-
 # First on the manually constructed RIT
 rit_union_output_manual \
     = reduce(np.union1d, (node2, node3, node5, node6))
@@ -205,7 +253,8 @@ rit_man0_union_output \
     = reduce(np.union1d, [node[1]._val
                           for node in rit_man0.leaf_nodes()])
 
-def test_manual_binary_RIT1():
+
+def test_manual_binary_RIT():
     # Test the manually constructed binary RIT
     # Check all node values
     assert_equal([node[1]._val.tolist()
@@ -223,35 +272,20 @@ def test_manual_binary_RIT1():
                  rit_man0_union_output.tolist())
 
 
-
-# Test that the train test observations sum to the
-# total data set observations
-
-
-def test_generate_rf_example1():
-
-    # Check train test feature split from `generate_rf_example`
-    # against the original breast cancer dataset
-    assert_equal(X_train.shape[0] + X_test.shape[0],
-                 breast_cancer.data.shape[0])
-
-    assert_equal(X_train.shape[1],
-                 breast_cancer.data.shape[1])
-
-    assert_equal(X_test.shape[1],
-                 breast_cancer.data.shape[1])
-
-    # Check feature and outcome sizes
-    assert_equal(X_train.shape[0] + X_test.shape[0],
-                 y_train.shape[0] + y_test.shape[0])
-
-
-
+# =============================================================================
 # Test build RIT
+# =============================================================================
+
 def test_build_tree():
     assert_true(len(rit0) <= 1 + 5 + 5**2)
     assert_true(len(rit1) <= 1 + 6 + 6**2)
     assert_true(len(rit2) == 1)
+    #
+
+
+# =============================================================================
+# Check Decision Tree Data extraction from RF
+# =============================================================================
 
 
 def test_rf_output():
@@ -278,7 +312,8 @@ def test_rf_output():
                       [0, 32, 40]]
 
     leaf_node_samples = [114, 1, 3, 1, 67, 1, 1,
-                         1, 3, 2, 3, 1, 3, 7, 2, 7, 1, 11, 3, 1, 91]
+                         1, 3, 2, 3, 1, 3, 7, 2,
+                         7, 1, 11, 3, 1, 91]
 
     leaf_node_values = [[0, 189],
                         [3, 0],
@@ -291,9 +326,11 @@ def test_rf_output():
                         [0, 3],
                         [0, 2],
                         [5, 0],
-                        [0, 1], [0, 7], [10, 0], [0, 3],
+                        [0, 1], [0, 7],
+                        [10, 0], [0, 3],
                         [12, 0], [0, 2],
-                        [19, 0], [0, 7], [1, 0], [137, 0]]
+                        [19, 0], [0, 7],
+                        [1, 0], [137, 0]]
 
     leaf_paths_features = [[20, 24, 27, 10, 0],
                            [20, 24, 27, 10, 0, 6, 0],
@@ -309,7 +346,8 @@ def test_rf_output():
                            [20, 24, 27, 21, 6, 6, 12],
                            [20, 24, 27, 21, 6],
                            [20, 24, 27, 21],
-                           [20, 24, 22], [20, 24, 22],
+                           [20, 24, 22],
+                           [20, 24, 22],
                            [20, 7, 17, 29],
                            [20, 7, 17, 29],
                            [20, 7, 17, 28],
@@ -319,11 +357,13 @@ def test_rf_output():
     node_depths = [5, 7, 9, 9, 8, 7, 7, 5, 5,
                    6, 7, 7, 5, 4, 3, 3, 4, 4, 4, 4, 2]
 
-    assert_array_equal(   np.concatenate(all_rf_tree_data['dtree1']['all_leaf_node_paths']),
-                          np.concatenate(leaf_node_path))
+    assert_array_equal(np.concatenate(
+        all_rf_tree_data['dtree1']['all_leaf_node_paths']),
+        np.concatenate(leaf_node_path))
 
-    assert_array_equal(all_rf_tree_data['dtree1']['all_leaf_node_samples'],
-                       leaf_node_samples)
+    assert_array_equal(
+        all_rf_tree_data['dtree1']['all_leaf_node_samples'],
+        leaf_node_samples)
 
     assert_array_equal(np.concatenate(
         all_rf_tree_data['dtree1']['all_leaf_node_values'], axis=0),
@@ -331,13 +371,16 @@ def test_rf_output():
 
     assert_array_equal(np.concatenate(
         all_rf_tree_data['dtree1']['all_leaf_paths_features']),
-                       np.concatenate(leaf_paths_features))
+        np.concatenate(leaf_paths_features))
 
     assert_array_equal(node_depths,
                        all_rf_tree_data['dtree1']['leaf_nodes_depths'])
 
 
-# test RIT_interactions
+# =============================================================================
+# Manually test RIT interactions are correctly picked up
+# =============================================================================
+
 def test_rit_interactions():
     all_rit_tree_data_test = {'rit0':
                               {'rit_intersected_values':
@@ -374,3 +417,81 @@ def test_rit_interactions():
     # check values
     for key in output.keys():
         assert_true(output[key] == output_test[key])
+        #
+
+
+# =============================================================================
+# Weighted RF Testing
+# =============================================================================
+
+
+def test_iRF_weight1():
+    # Check when label is random, whether the feature importance of every
+    # feature is the same.
+    n_samples = 1000
+    n_features = 10
+    random_state_classifier = 2018
+    np.random.seed(random_state_classifier)
+    X_train = np.random.uniform(low=0, high=1, size=(n_samples, n_features))
+    y_train = np.random.choice([0, 1], size=(n_samples,), p=[.5, .5])
+    X_test = np.random.uniform(low=0, high=1, size=(n_samples, n_features))
+    y_test = np.random.choice([0, 1], size=(n_samples,), p=[.5, .5])
+    all_rf_weights, all_K_iter_rf_data, \
+        all_rf_bootstrap_output, all_rit_bootstrap_output, \
+        stability_score = irf_utils.run_iRF(X_train=X_train,
+                                            X_test=X_test,
+                                            y_train=y_train,
+                                            y_test=y_test,
+                                            K=5,
+                                            n_estimators=20,
+                                            B=30,
+                                            random_state_classifier=2018,
+                                            propn_n_samples=.2,
+                                            bin_class_type=1,
+                                            M=20,
+                                            max_depth=5,
+                                            noisy_split=False,
+                                            num_splits=2,
+                                            n_estimators_bootstrap=5)
+    assert_true(np.max(all_rf_weights['rf_weight5']) < .135)
+    #
+
+
+def test_iRF_weight2():
+    # Check when feature 1 fully predict the label,
+    # its importance should be 1
+
+    n_samples = 1000
+    n_features = 10
+    random_state_classifier = 2018
+    np.random.seed(random_state_classifier)
+
+    X_train = np.random.uniform(low=0, high=1, size=(n_samples, n_features))
+    y_train = np.random.choice([0, 1], size=(n_samples,), p=[.5, .5])
+    X_test = np.random.uniform(low=0, high=1, size=(n_samples, n_features))
+    y_test = np.random.choice([0, 1], size=(n_samples,), p=[.5, .5])
+
+    # first feature is very important
+    X_train[:, 1] = X_train[:, 1] + y_train
+    X_test[:, 1] = X_test[:, 1] + y_test
+
+    all_rf_weights, all_K_iter_rf_data, \
+        all_rf_bootstrap_output, all_rit_bootstrap_output, \
+        stability_score = irf_utils.run_iRF(X_train=X_train,
+                                            X_test=X_test,
+                                            y_train=y_train,
+                                            y_test=y_test,
+                                            K=5,
+                                            n_estimators=20,
+                                            B=30,
+                                            random_state_classifier=2018,
+                                            propn_n_samples=.2,
+                                            bin_class_type=1,
+                                            M=20,
+                                            max_depth=5,
+                                            noisy_split=False,
+                                            num_splits=2,
+                                            n_estimators_bootstrap=5)
+
+    # print(all_rf_weights['rf_weight5'])
+    assert_equal(all_rf_weights['rf_weight5'][1], 1)

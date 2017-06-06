@@ -22,17 +22,12 @@ from functools import reduce
 from scipy import stats
 from math import ceil
 
-#from sklearn import metrics
 from sklearn import metrics
-#from sklearn import tree
 from . import tree
-#from sklearn.tree import _tree
 from . import _tree
-# Needed for the scikit-learn wrapper function
-#from sklearn.utils import resample
 from ..utils import resample
-#from sklearn.ensemble import RandomForestClassifier
 from ..ensemble.forest import RandomForestClassifier
+
 
 # =============================================================================
 # Decision Tree Data Extraction
@@ -118,7 +113,7 @@ def get_validation_metrics(inp_class_reg_obj, y_true, X_test):
     """
     Get the various Random Forest/ Decision Tree metrics
     This is currently setup only for classification forests and trees
-        TODO/ CHECK: We need to update this for regression purposes later
+    TODO/ CHECK: We need to update this for regression purposes later
 
     Get all the individual tree paths from root node to the leaves
     for a decision tree classifier object [1]_.
@@ -268,16 +263,13 @@ def get_validation_metrics(inp_class_reg_obj, y_true, X_test):
     return classification_metrics
 
 
-def get_tree_data(X_train, X_test, y_test, dtree, root_node_id=0):
+def _get_tree_data(X_train, X_test, y_test, dtree, root_node_id=0):
     """
     This returns all of the required summary results from an
     individual decision tree
 
     Parameters
     ----------
-    dtree : DecisionTreeClassifier object
-        An individual decision tree classifier object generated from a
-        fitted RandomForestClassifier object in scikit learn.
 
     X_train : array-like or sparse matrix, shape = [n_samples, n_features]
         Training vector, where n_samples in the number of samples and
@@ -290,6 +282,10 @@ def get_tree_data(X_train, X_test, y_test, dtree, root_node_id=0):
     y_test : 1d array-like, or label indicator array / sparse matrix
         Ground truth (correct) target values.
 
+    dtree : DecisionTreeClassifier object
+        An individual decision tree classifier object generated from a
+        fitted RandomForestClassifier object in scikit learn.
+
     root_node_id : int, optional (default=0)
         The index of the root node of the tree. Should be set as default to
         0 and not changed by the user
@@ -298,7 +294,7 @@ def get_tree_data(X_train, X_test, y_test, dtree, root_node_id=0):
     -------
     tree_data : dict
         Return a dictionary containing various tree metrics
-    from the input fitted Classifier object
+        from the input fitted Classifier object
 
     Examples
     --------
@@ -313,7 +309,7 @@ def get_tree_data(X_train, X_test, y_test, dtree, root_node_id=0):
         n_estimators=3, random_state=2018)
     >>> rf.fit(X=X_train, y=y_train)
     >>> estimator0 = rf.estimators_[0]
-    >>> estimator0_out = get_tree_data(X_train=X_train,
+    >>> estimator0_out = _get_tree_data(X_train=X_train,
                                      dtree=estimator0,
                                      root_node_id=0)
     >>> print(estimator0_out['all_leaf_nodes'])
@@ -439,6 +435,63 @@ def get_rf_tree_data(rf, X_train, X_test, y_test):
     """
     Get the entire fitted random forest and its decision tree data
     as a convenient dictionary format
+
+    Parameters
+    ----------
+    rf : RandomForestClassifier object [1]_
+        An individual decision tree or random forest classifier
+        object generated from a fitted Classifier object in scikit learn.
+
+    dtree : DecisionTreeClassifier object
+        An individual decision tree classifier object generated from a
+        fitted RandomForestClassifier object in scikit learn.
+
+    X_train : array-like or sparse matrix, shape = [n_samples, n_features]
+        Training vector, where n_samples in the number of samples and
+        n_features is the number of features.
+
+    X_test : array-like or sparse matrix, shape = [n_samples, n_features]
+        Test vector, where n_samples in the number of samples and
+        n_features is the number of features.
+
+    y_test : 1d array-like, or label indicator array / sparse matrix
+        Ground truth (correct) target values.
+
+    root_node_id : int, optional (default=0)
+        The index of the root node of the tree. Should be set as default to
+        0 and not changed by the user
+
+    Returns
+    -------
+    tree_data : dict
+        Return a dictionary containing various tree metrics
+    from the input fitted Classifier object
+
+    References
+    ----------
+        .. [1] https://en.wikipedia.org/wiki/Decision_tree_learning
+
+    Examples
+    --------
+    >>> from sklearn.datasets import load_breast_cancer
+    >>> from sklearn.model_selection import train_test_split
+    >>> from sklearn.ensemble import RandomForestClassifier
+    >>> raw_data = load_breast_cancer()
+    >>> X_train, X_test, y_train, y_test = train_test_split(
+        raw_data.data, raw_data.target, train_size=0.9,
+        random_state=2017)
+    >>> rf = RandomForestClassifier(
+        n_estimators=3, random_state=2018)
+    >>> rf.fit(X=X_train, y=y_train)
+    >>> estimator0 = rf.estimators_[0]
+    >>> estimator0_out = _get_tree_data(X_train=X_train,
+                                     dtree=estimator0,
+                                     root_node_id=0)
+    >>> print(estimator0_out['all_leaf_nodes'])
+    ...                             # doctest: +SKIP
+    ...
+    [6, 8, 9, 10, 12, 14, 15, 19, 22, 23, 24, \
+     25, 26, 29, 30, 32, 34, 36, 37, 40, 41, 42]
     """
 
     # random forest feature importances i.e. next iRF iteration weights
@@ -466,8 +519,8 @@ def get_rf_tree_data(rf, X_train, X_test, y_test):
 
     # CHECK: Ask SVW if the following should be paralellized!
     for idx, dtree in enumerate(rf.estimators_):
-        dtree_out = get_tree_data(X_train=X_train,
-                                  X_test=X_test,
+        dtree_out = _get_tree_data(X_train=X_train,
+                                   X_test=X_test,
                                   y_test=y_test,
                                   dtree=dtree,
                                   root_node_id=0)
@@ -529,12 +582,12 @@ def _dtree_filter_comp(dtree_data,
                        bin_class_type):
     """
     List comprehension filter helper function to filter
-    the data from the `get_tree_data` function output
+    the data from the `_get_tree_data` function output
 
     Parameters
     ----------
     dtree_data : dictionary
-        Summary dictionary output after calling `get_tree_data` on a
+        Summary dictionary output after calling `_get_tree_data` on a
         scikit learn decision tree object
 
     filter_key : str
@@ -566,8 +619,8 @@ def _dtree_filter_comp(dtree_data,
             if j == bin_class_type]
 
 
-def filter_leaves_classifier(dtree_data,
-                             bin_class_type):
+def _filter_leaves_classifier(dtree_data,
+                              bin_class_type):
     """
     Filters the leaf node data from a decision tree
     for either {0,1} classes for iRF purposes
@@ -575,7 +628,7 @@ def filter_leaves_classifier(dtree_data,
     Parameters
     ----------
     dtree_data : dictionary
-        Summary dictionary output after calling `get_tree_data` on a
+        Summary dictionary output after calling `_get_tree_data` on a
         scikit learn decision tree object
 
     bin class type : int
@@ -617,11 +670,13 @@ def filter_leaves_classifier(dtree_data,
     return all_filtered_outputs
 
 
-def weighted_random_choice(values, weights):
+def _weighted_random_choice(values, weights):
     """
     Discrete distribution, drawing values with the frequency
     specified in weights.
     Weights do not need to be normalized.
+    CHECK: Should we ensure that values/ weights are made unique
+           before normalizing?
     """
     if not len(weights) == len(values):
         raise ValueError('Equal number of values and weights expected')
@@ -647,7 +702,7 @@ def generate_rit_samples(all_rf_tree_data, bin_class_type=1):
     all_weights = []
     all_paths = []
     for dtree in range(n_estimators):
-        filtered = filter_leaves_classifier(
+        filtered = _filter_leaves_classifier(
             dtree_data=all_rf_tree_data['dtree{}'.format(dtree)],
             bin_class_type=bin_class_type)
         all_weights.extend(filtered['tot_leaf_node_values'])
@@ -655,7 +710,7 @@ def generate_rit_samples(all_rf_tree_data, bin_class_type=1):
 
     # Return the generator of randomly sampled observations
     # by specified weights
-    return weighted_random_choice(all_paths, all_weights)
+    return _weighted_random_choice(all_paths, all_weights)
 
 
 # =============================================================================
