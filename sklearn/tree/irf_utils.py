@@ -21,8 +21,8 @@ from functools import partial
 from functools import reduce
 from scipy import stats
 from math import ceil
+from ..metrics import classification
 
-from sklearn import metrics
 from . import tree
 from . import _tree
 from ..utils import resample
@@ -181,73 +181,32 @@ def get_validation_metrics(inp_class_reg_obj, y_true, X_test):
 
     # CLASSIFICATION metrics calculations
 
-    # Cohen’s kappa: a statistic that measures inter-annotator agreement.
-    # cohen_kappa_score = metrics.cohen_kappa_score(y1, y2[, labels, ...])
-
-    # Compute Area Under the Curve (AUC) using the trapezoidal rule
-    # fpr, tpr, thresholds = metrics.roc_curve(y_true = y_true,
-    #                                          y_pred = y_pred)
-    # auc = metrics.auc(fpr, tpr)
-
-    # Compute average precision (AP) from prediction scores
-    # average_precision_score = metrics.average_precision_score(y_true =
-    # y_true, y_score)
-
-    # Compute the Brier score.
-    # metrics.brier_score_loss(y_true = y_true, y_prob[, ...])
-
-    # Compute the F-beta score
-    # metrics.fbeta_score(y_true = y_true, y_pred = y_pred, beta[, ...])
-
-    # Average hinge loss (non-regularized)
-    # metrics.hinge_loss(y_true = y_true, pred_decision[, ...])
-
-    # Compute the Matthews correlation coefficient (MCC) for binary classes
-    # metrics.matthews_corrcoef(y_true = y_true, y_pred[, ...])
-
-    # Compute precision-recall pairs for different probability thresholds
-    # metrics.precision_recall_curve(y_true = y_true, ...)
-
-    # Compute precision, recall, F-measure and support for each class
-    # metrics.precision_recall_fscore_support(...)
-
-    # Compute Area Under the Curve (AUC) from prediction scores
-    # metrics.roc_auc_score(y_true = y_true, y_score[, ...])
-
-    # Compute Receiver operating characteristic (ROC)
-    # metrics.roc_curve(y_true = y_true, y_score[, ...])
-
-    # Jaccard similarity coefficient score
-    # jaccard_similarity_score =
-    # metrics.jaccard_similarity_score(y_true = y_true, y_pred = y_pred)
-
     # Compute the F1 score, also known as balanced F-score or F-measure
-    f1_score = metrics.f1_score(y_true=y_true, y_pred=y_pred)
+    f1_score = classification.f1_score(y_true=y_true, y_pred=y_pred)
 
     # Compute the average Hamming loss.
-    hamming_loss = metrics.hamming_loss(y_true=y_true, y_pred=y_pred)
+    hamming_loss = classification.hamming_loss(y_true=y_true, y_pred=y_pred)
 
     # Log loss, aka logistic loss or cross-entropy loss.
-    log_loss = metrics.log_loss(y_true=y_true, y_pred=y_pred)
+    log_loss = classification.log_loss(y_true=y_true, y_pred=y_pred)
 
     # Compute the precision
-    precision_score = metrics.precision_score(y_true=y_true, y_pred=y_pred)
+    precision_score = classification.precision_score(
+        y_true=y_true, y_pred=y_pred)
 
     # Compute the recall
-    recall_score = metrics.recall_score(y_true=y_true, y_pred=y_pred)
+    recall_score = classification.recall_score(y_true=y_true, y_pred=y_pred)
 
     # Accuracy classification score
-    accuracy_score = metrics.accuracy_score(y_true=y_true, y_pred=y_pred)
-
-    # Build a text report showing the main classification metrics
-    # classification_report = metrics.classification_report(
-    # y_true=y_true, y_pred=y_pred)
+    accuracy_score = classification.accuracy_score(
+        y_true=y_true, y_pred=y_pred)
 
     # Compute confusion matrix to evaluate the accuracy of a classification
-    confusion_matrix = metrics.confusion_matrix(y_true=y_true, y_pred=y_pred)
+    confusion_matrix = classification.confusion_matrix(
+        y_true=y_true, y_pred=y_pred)
 
     # Zero-one classification loss.
-    zero_one_loss = metrics.zero_one_loss(y_true=y_true, y_pred=y_pred)
+    zero_one_loss = classification.zero_one_loss(y_true=y_true, y_pred=y_pred)
 
     # Load all metrics into a single dictionary
     classification_metrics = {"hamming_loss": hamming_loss,
@@ -256,7 +215,6 @@ def get_validation_metrics(inp_class_reg_obj, y_true, X_test):
                               "precision_score": precision_score,
                               "accuracy_score": accuracy_score,
                               "f1_score": f1_score,
-                              # "classification_report": classification_report,
                               "confusion_matrix": confusion_matrix,
                               "zero_one_loss": zero_one_loss}
 
@@ -489,7 +447,6 @@ def get_rf_tree_data(rf, X_train, X_test, y_test):
                                      root_node_id=0)
     >>> print(estimator0_out['all_leaf_nodes'])
     ...                             # doctest: +SKIP
-    ...
     [6, 8, 9, 10, 12, 14, 15, 19, 22, 23, 24, \
      25, 26, 29, 30, 32, 34, 36, 37, 40, 41, 42]
     """
@@ -521,9 +478,9 @@ def get_rf_tree_data(rf, X_train, X_test, y_test):
     for idx, dtree in enumerate(rf.estimators_):
         dtree_out = _get_tree_data(X_train=X_train,
                                    X_test=X_test,
-                                  y_test=y_test,
-                                  dtree=dtree,
-                                  root_node_id=0)
+                                   y_test=y_test,
+                                   dtree=dtree,
+                                   root_node_id=0)
 
         # Append output to our combined random forest outputs dict
         all_rf_tree_outputs["dtree{}".format(idx)] = dtree_out
@@ -904,11 +861,11 @@ def _get_stability_score(all_rit_bootstrap_output):
 # iterative Random Forest (iRF) Wrapper
 # CHECK: This should be a single class
 #        This should have fit method to run the iRF
-#        The first loop should be simplified when storing the RFs (can we pickle)
+#        The first loop should be simplified when storing the RFs (pickle?)
 #        Can we pickle the stored RFs and iRFs for offline use and extraction
-#        Can we parallelize the second and third loops further (scikit API joblib)
-#        Should we Cythonize the code i.e. all functions especially RIT further?
-#
+#        Can we parallelize the second and third loops further (scikit
+#        API joblib)
+#        Should we Cythonize the code i.e. all functions esp. RIT further?
 # =============================================================================
 
 def run_iRF(X_train,
