@@ -849,12 +849,11 @@ def _get_stability_score(all_rit_bootstrap_output):
         rit_counts = list(rit_counts.keys())
         bootstrap_interact.append(rit_counts)
 
-        def flatten(l):
-            return [item for sublist in l for item in sublist]
-        all_rit_interactions = flatten(bootstrap_interact)
-        stability = {m: all_rit_interactions.count(
-            m) / B for m in all_rit_interactions}
-        return stability
+    def flatten(l): return [item for sublist in l for item in sublist]
+    all_rit_interactions = flatten(bootstrap_interact)
+    stability = {m: all_rit_interactions.count(
+        m) / B for m in all_rit_interactions}
+    return stability
 
 
 # =============================================================================
